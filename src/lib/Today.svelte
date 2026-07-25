@@ -97,8 +97,7 @@
         !t.unscheduled &&
         (!hideCompleted || !t.completed) &&
         (!mvpMode || mvpIds.includes(t.id)) &&
-        doableFilter(t) &&
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()),
+        doableFilter(t),
     ),
   );
   let unscheduledTasks = $derived(
@@ -107,8 +106,7 @@
         t.unscheduled &&
         (!hideCompleted || !t.completed) &&
         (!mvpMode || mvpIds.includes(t.id)) &&
-        doableFilter(t) &&
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()),
+        doableFilter(t),
     ),
   );
   let todayHighlight = $derived(
@@ -409,7 +407,6 @@
     <button class="tb-plan-btn" onclick={onPlanDay} title="Plan your day">
       <Sunrise size={13} strokeWidth={1.5} />Plan
     </button>
-    <input type="search" class="tb-search" placeholder="Search..." bind:value={searchQuery} />
   </div>
 </div>
 
@@ -812,18 +809,6 @@
     cursor: pointer; transition: all 0.15s var(--ease);
   }
   .tb-plan-btn:hover { filter: brightness(1.1); }
-  .tb-search {
-    width: 120px;
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: 0.5px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    font-size: 12px;
-    transition: all 0.15s var(--ease);
-  }
-  .tb-search:focus { border-color: var(--accent); box-shadow: var(--accent-ring); }
-
   .today-scroll {
     flex: 1;
     overflow-y: auto;

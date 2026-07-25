@@ -23,7 +23,7 @@
   import Onboarding from './lib/Onboarding.svelte'
   import Account from './lib/Account.svelte'
   import { store, someday, addTask, loadAll, exportData, importData, loadPoints, savePoints, computeStreak, computeMomentum, getRecentAverageCompletion, generateWeeklyLetter, requestPermission, scheduleAll, removeTask, rolloverIncompleteTasks } from './lib/taskStore.svelte.js'
-  import { Menu, Search, CalendarDays, Sunrise, Plus, CircleCheckBig, Download, Star, Flame, Sparkles, Monitor } from 'lucide-svelte'
+  import { Menu, CalendarDays, Sunrise, Plus, CircleCheckBig, Download, Star, Flame, Sparkles, Monitor } from 'lucide-svelte'
 import Toast from './lib/Toast.svelte'
 import LockScreen from './lib/LockScreen.svelte'
 import DopamineMenu from './lib/DopamineMenu.svelte'
@@ -413,9 +413,6 @@ import ShutdownRitual from './lib/ShutdownRitual.svelte'
             <Download size={14} strokeWidth={1.5} />
           </button>
         {/if}
-        <button class="header-search-btn" onclick={() => showSearch = true} aria-label="Search (Ctrl+K)">
-          <Search size={16} strokeWidth={1.5} />
-        </button>
         <span class="points-badge"><Star size={14} strokeWidth={1.5} /> {points}</span>
         <button class="emergency-btn" onclick={openEmergency} aria-label="Emergency mode">1</button>
         <button class="dm-btn" onclick={() => showDopamine = true} aria-label="Dopamine menu">
@@ -532,8 +529,7 @@ import ShutdownRitual from './lib/ShutdownRitual.svelte'
   .logo { font-size: 20px; font-weight: 650; letter-spacing: -0.3px; color: var(--text); flex: 1; }
   .header-actions { display: flex; align-items: center; gap: 6px; }
   .points-badge { font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-subtle); padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
-  .header-search-btn { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); background: transparent; border: none; padding: 0; transition: all 0.15s var(--ease); flex-shrink: 0; }
-  .header-search-btn:hover { color: var(--text); background: var(--surface-hover); }
+
   .install-btn { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--complete); background: transparent; border: none; padding: 0; transition: all 0.15s var(--ease); flex-shrink: 0; }
   .install-btn:hover { background: var(--complete-bg); }
   .emergency-btn { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--danger); background: rgba(176,96,96,0.1); border: 1px solid rgba(176,96,96,0.2); padding: 0; font-size: 13px; font-weight: 700; transition: all 0.15s var(--ease); flex-shrink: 0; }
