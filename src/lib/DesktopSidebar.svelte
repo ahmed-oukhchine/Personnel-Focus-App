@@ -1,7 +1,7 @@
 <script>
-  import { LayoutDashboard, CalendarDays, Inbox, Crosshair, ListChecks, Clock, Calendar, Target, Columns3, SquareCheck, Tags, BookOpen, TrendingUp, Settings, Briefcase, Star, Flame, Search, Sunrise, Moon, Sun, Monitor, Smartphone, Download, Upload } from 'lucide-svelte'
+  import { LayoutDashboard, CalendarDays, Inbox, Crosshair, ListChecks, Clock, Calendar, Target, Columns3, SquareCheck, Tags, BookOpen, TrendingUp, Settings, Briefcase, Star, Flame, Search, Sunrise, Moon, Sun, Monitor, Smartphone, Download, Upload, LogOut } from 'lucide-svelte'
 
-  let { activeView, streak, points, theme, effectiveTheme, onNavigate, onThemeCycle, onExport, onImport, onOpenSearch, onPlanDay, inboxCount = 0, somedayCount = 0 } = $props()
+  let { activeView, streak, points, theme, effectiveTheme, onNavigate, onThemeCycle, onExport, onImport, onOpenSearch, onPlanDay, onLogout, inboxCount = 0, somedayCount = 0 } = $props()
   let isTouch = $state(window.matchMedia('(pointer:coarse)').matches)
 
   const GROUPS = [
@@ -74,6 +74,12 @@
         {/if}
       </div>
     {/each}
+    <div class="ds-section">
+      <button class="ds-row" onclick={onLogout}>
+        <LogOut size={17} strokeWidth={1.5} class="ds-row-icon" />
+        <span class="ds-row-label">Log out</span>
+      </button>
+    </div>
   </nav>
 
   <div class="ds-footer">

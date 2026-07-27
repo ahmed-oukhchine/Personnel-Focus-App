@@ -23,7 +23,7 @@
   import Onboarding from './lib/Onboarding.svelte'
   import Account from './lib/Account.svelte'
   import { store, someday, addTask, loadAll, exportData, importData, loadPoints, savePoints, computeStreak, computeMomentum, getRecentAverageCompletion, generateWeeklyLetter, requestPermission, scheduleAll, removeTask, rolloverIncompleteTasks } from './lib/taskStore.svelte.js'
-  import { Menu, CalendarDays, Sunrise, Plus, CircleCheckBig, Download, Star, Flame, Sparkles, Monitor } from 'lucide-svelte'
+  import { Menu, CalendarDays, Sunrise, Plus, CircleCheckBig, Download, Star, Flame, Sparkles, Monitor, Lock } from 'lucide-svelte'
 import Toast from './lib/Toast.svelte'
 import LockScreen from './lib/LockScreen.svelte'
 import DopamineMenu from './lib/DopamineMenu.svelte'
@@ -67,7 +67,7 @@ import ShutdownRitual from './lib/ShutdownRitual.svelte'
   let deferredInstall = $state(null)
   const IDLE_TIMEOUT = 5 * 60 * 1000
   let lastActivity = $state(Date.now())
-  let showLock = $state(false)
+  let showLock = $state(!!localStorage.getItem('focus-locked'))
   let showDopamine = $state(false)
   let isDesktop = $state(false)
   let showDayComplete = $state(false)
@@ -177,10 +177,21 @@ import ShutdownRitual from './lib/ShutdownRitual.svelte'
     userName = user
     showAccount = false
     showLock = false
+    localStorage.removeItem('focus-locked')
     localStorage.setItem('focus-session-expiry', String(Date.now() + 30 * 60 * 1000))
     checkRituals()
     checkWeeklyReview()
     checkBackupReminder()
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('focus-account-user')
+    localStorage.removeItem('focus-account-hash')
+    localStorage.removeItem('focus-session-expiry')
+    localStorage.removeItem('focus-locked')
+    userName = ''
+    showAccount = true
+    showLock = false
   }
 
   function applyTheme(t) {
@@ -304,7 +315,7 @@ import ShutdownRitual from './lib/ShutdownRitual.svelte'
         }
       }
       if (hasAccount && !showOnboarding && !showAccount && Date.now() - lastActivity > IDLE_TIMEOUT) {
-        showLock = true
+        showLock = true; localStorage.setItem('focus-locked', '1')
       }
     }, 5000)
     document.addEventListener('keydown', handleKeydown)
@@ -387,12 +398,12 @@ import ShutdownRitual from './lib/ShutdownRitual.svelte'
 {/if}
 
 {#if !isDesktop}
-  <Sidebar open={sidebarOpen} {activeView} {streak} {points} {theme} {effectiveTheme} onNavigate={(v) => activeView = v} onClose={() => sidebarOpen = false} onThemeCycle={cycleTheme} onExport={handleExport} onImport={handleImport} onPlanDay={() => showMorning = true} {inboxCount} {somedayCount} />
+  <Sidebar open={sidebarOpen} {activeView} {streak} {points} {theme} {effectiveTheme} onNavigate={(v) => activeView = v} onClose={() => sidebarOpen = false} onThemeCycle={cycleTheme} onExport={handleExport} onImport={handleImport} onPlanDay={() => showMorning = true} onLogout={handleLogout} {inboxCount} {somedayCount} />
 {/if}
 
 <div class="app-layout">
   {#if isDesktop}
-    <DesktopSidebar {activeView} {streak} {points} {theme} {effectiveTheme} onNavigate={(v) => activeView = v} onThemeCycle={cycleTheme} onExport={handleExport} onImport={handleImport} {inboxCount} {somedayCount} onOpenSearch={() => showSearch = true} onPlanDay={() => showMorning = true} />
+    <DesktopSidebar {activeView} {streak} {points} {theme} {effectiveTheme} onNavigate={(v) => activeView = v} onThemeCycle={cycleTheme} onExport={handleExport} onImport={handleImport} {inboxCount} {somedayCount} onOpenSearch={() => showSearch = true} onPlanDay={() => showMorning = true} onLogout={handleLogout} />
   {/if}
 
   <div class="app-main">
@@ -417,6 +428,9 @@ import ShutdownRitual from './lib/ShutdownRitual.svelte'
         <button class="emergency-btn" onclick={openEmergency} aria-label="Emergency mode">1</button>
         <button class="dm-btn" onclick={() => showDopamine = true} aria-label="Dopamine menu">
           <Sparkles size={16} strokeWidth={1.5} />
+        </button>
+        <button class="header-lock-btn" onclick={() => { showLock = true; localStorage.setItem('focus-locked', '1') }} aria-label="Lock app">
+          <Lock size={16} strokeWidth={1.5} />
         </button>
         {#if !isDesktop}
           <span class="date">{dayStr}</span>
@@ -536,6 +550,8 @@ import ShutdownRitual from './lib/ShutdownRitual.svelte'
   .emergency-btn:hover { background: rgba(176,96,96,0.2); transform: scale(1.05); }
   .dm-btn { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--accent); background: transparent; border: none; padding: 0; transition: all 0.15s var(--ease); flex-shrink: 0; }
   .dm-btn:hover { background: var(--accent-subtle); }
+  .header-lock-btn { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); background: transparent; border: none; padding: 0; transition: all 0.15s var(--ease); flex-shrink: 0; }
+  .header-lock-btn:hover { color: var(--text); background: var(--surface-hover); }
   .resting-badge { font-size: 10px; font-weight: 600; color: var(--complete); background: var(--complete-bg); padding: 3px 10px; border-radius: 20px; letter-spacing: 0.3px; }
 
   @media (max-width: 1279px) {

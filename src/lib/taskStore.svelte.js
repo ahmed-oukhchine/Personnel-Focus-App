@@ -69,6 +69,19 @@ export function loadAll() {
       if (key === 'points') { _points = Number(raw); continue }
       const value = JSON.parse(raw)
       if (key === 'tasks') { store.tasks = value; continue }
+      if (key === 'templates') {
+        templates.items = value.map(t => ({
+          icon: t.icon || '',
+          color: t.color || '',
+          favorite: t.favorite || false,
+          pinned: t.pinned || false,
+          useCount: t.useCount || 0,
+          lastUsed: t.lastUsed || null,
+          archived: t.archived || false,
+          ...t
+        }))
+        continue
+      }
       setSource(key, { items: value })
     }
   } catch {}
@@ -344,8 +357,12 @@ export function moveSomedayToToday(id) {
 
 // --- Routines ---
 
-export function addRoutine(title, type) {
-  routines.items.push({ id: crypto.randomUUID(), title, type, items: [], createdAt: Date.now() })
+export function addRoutine(title, type, estimatedTime) {
+  routines.items.push({
+    id: crypto.randomUUID(), title, type, items: [], createdAt: Date.now(),
+    completedDates: [], collapseCompleted: false,
+    estimatedTime: estimatedTime || null
+  })
   persist()
 }
 
@@ -354,10 +371,38 @@ export function removeRoutine(id) {
   persist()
 }
 
+export function duplicateRoutine(id) {
+  const r = routines.items.find(r => r.id === id)
+  if (r) {
+    const copy = {
+      ...r,
+      id: crypto.randomUUID(),
+      title: r.title + ' (copy)',
+      items: r.items.map(i => ({ ...i, id: crypto.randomUUID() })),
+      completedDates: [],
+      createdAt: Date.now()
+    }
+    const idx = routines.items.indexOf(r)
+    routines.items.splice(idx + 1, 0, copy)
+    persist()
+  }
+}
+
+export function moveRoutine(id, dir) {
+  const idx = routines.items.findIndex(r => r.id === id)
+  if (dir === 'up' && idx > 0) {
+    [routines.items[idx - 1], routines.items[idx]] = [routines.items[idx], routines.items[idx - 1]]
+    persist()
+  } else if (dir === 'down' && idx < routines.items.length - 1) {
+    [routines.items[idx], routines.items[idx + 1]] = [routines.items[idx + 1], routines.items[idx]]
+    persist()
+  }
+}
+
 export function addRoutineItem(routineId, title) {
   const r = routines.items.find(r => r.id === routineId)
   if (r) {
-    r.items.push({ id: crypto.randomUUID(), title, completed: false })
+    r.items.push({ id: crypto.randomUUID(), title, completed: false, timeEstimate: null })
     persist()
   }
 }
@@ -366,7 +411,23 @@ export function toggleRoutineItem(routineId, itemId) {
   const r = routines.items.find(r => r.id === routineId)
   if (r) {
     const item = r.items.find(i => i.id === itemId)
-    if (item) { item.completed = !item.completed; persist() }
+    if (item) {
+      item.completed = !item.completed
+      checkRoutineCompletion(r)
+      persist()
+    }
+  }
+}
+
+function checkRoutineCompletion(r) {
+  const today = new Date().toISOString().split('T')[0]
+  const allDone = r.items.length > 0 && r.items.every(i => i.completed)
+  if (allDone) {
+    if (!r.completedDates.includes(today)) {
+      r.completedDates.push(today)
+    }
+  } else {
+    r.completedDates = r.completedDates.filter(d => d !== today)
   }
 }
 
@@ -374,8 +435,72 @@ export function removeRoutineItem(routineId, itemId) {
   const r = routines.items.find(r => r.id === routineId)
   if (r) {
     r.items = r.items.filter(i => i.id !== itemId)
+    checkRoutineCompletion(r)
     persist()
   }
+}
+
+export function moveRoutineItem(routineId, itemId, dir) {
+  const r = routines.items.find(r => r.id === routineId)
+  if (!r) return
+  const idx = r.items.findIndex(i => i.id === itemId)
+  if (dir === 'up' && idx > 0) {
+    [r.items[idx - 1], r.items[idx]] = [r.items[idx], r.items[idx - 1]]
+    persist()
+  } else if (dir === 'down' && idx < r.items.length - 1) {
+    [r.items[idx], r.items[idx + 1]] = [r.items[idx + 1], r.items[idx]]
+    persist()
+  }
+}
+
+export function setRoutineItemTime(routineId, itemId, minutes) {
+  const r = routines.items.find(r => r.id === routineId)
+  if (!r) return
+  const item = r.items.find(i => i.id === itemId)
+  if (item) {
+    item.timeEstimate = minutes ? parseInt(minutes) : null
+    persist()
+  }
+}
+
+export function toggleRoutineCollapse(routineId) {
+  const r = routines.items.find(r => r.id === routineId)
+  if (r) {
+    r.collapseCompleted = !r.collapseCompleted
+    persist()
+  }
+}
+
+export function getRoutineStreak(r) {
+  if (!r?.completedDates?.length) return 0
+  let streak = 0
+  const today = new Date()
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    const key = d.toISOString().split('T')[0]
+    if (r.completedDates.includes(key)) streak++
+    else if (i > 0) break
+  }
+  return streak
+}
+
+export function getRoutineSummary() {
+  const all = routines.items
+  const morning = { total: 0, done: 0 }
+  const evening = { total: 0, done: 0 }
+  const today = new Date().toISOString().split('T')[0]
+  for (const r of all) {
+    for (const i of r.items) {
+      if (r.type === 'morning') { morning.total++; if (i.completed) morning.done++ }
+      else { evening.total++; if (i.completed) evening.done++ }
+    }
+  }
+  return { morning, evening }
+}
+
+export function getRoutineTotalTime(r) {
+  return r.items.reduce((sum, i) => sum + (i.timeEstimate || 0), 0)
 }
 
 // --- Life Courses ---
@@ -521,13 +646,59 @@ export function saveNote(date, content) {
 // --- Templates ---
 
 export function addTemplate(data) {
-  templates.items.push({ id: crypto.randomUUID(), ...data, createdAt: Date.now() })
+  const item = {
+    id: crypto.randomUUID(),
+    icon: '',
+    color: '',
+    favorite: false,
+    pinned: false,
+    useCount: 0,
+    lastUsed: null,
+    archived: false,
+    ...data,
+    createdAt: Date.now()
+  }
+  templates.items.push(item)
+  persist()
+}
+
+export function updateTemplate(id, data) {
+  const idx = templates.items.findIndex(t => t.id === id)
+  if (idx === -1) return
+  templates.items[idx] = { ...templates.items[idx], ...data }
   persist()
 }
 
 export function removeTemplate(id) {
   templates.items = templates.items.filter(t => t.id !== id)
   persist()
+}
+
+export function toggleFavorite(id) {
+  const t = templates.items.find(t => t.id === id)
+  if (t) { t.favorite = !t.favorite; persist() }
+}
+
+export function togglePin(id) {
+  const t = templates.items.find(t => t.id === id)
+  if (t) { t.pinned = !t.pinned; persist() }
+}
+
+export function recordTemplateUse(id) {
+  const t = templates.items.find(t => t.id === id)
+  if (t) { t.useCount = (t.useCount || 0) + 1; t.lastUsed = Date.now(); persist() }
+}
+
+export function archiveTemplate(id) {
+  const t = templates.items.find(t => t.id === id)
+  if (t) { t.archived = !t.archived; persist() }
+}
+
+export function duplicateTemplate(id) {
+  const t = templates.items.find(t => t.id === id)
+  if (!t) return
+  const { id: _, createdAt: __, ...rest } = t
+  addTemplate({ ...rest, title: rest.title + ' (copy)' })
 }
 
 // --- Goals ---

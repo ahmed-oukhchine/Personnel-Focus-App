@@ -1,8 +1,8 @@
 <script>
   import { fly } from 'svelte/transition'
-  import { LayoutDashboard, CalendarDays, Inbox, Crosshair, ListChecks, Clock, Calendar, Target, Columns3, SquareCheck, Tags, BookOpen, TrendingUp, Settings, ChevronDown, Briefcase, Star, Flame, X, Sunrise, Moon, Sun, Monitor, Smartphone, Download, Upload } from 'lucide-svelte'
+  import { LayoutDashboard, CalendarDays, Inbox, Crosshair, ListChecks, Clock, Calendar, Target, Columns3, SquareCheck, Tags, BookOpen, TrendingUp, Settings, ChevronDown, Briefcase, Star, Flame, X, Sunrise, Moon, Sun, Monitor, Smartphone, Download, Upload, LogOut } from 'lucide-svelte'
 
-  let { open, activeView, streak, points, theme, effectiveTheme, onNavigate, onClose, onThemeCycle, onExport, onImport, onPlanDay, inboxCount = 0, somedayCount = 0 } = $props()
+  let { open, activeView, streak, points, theme, effectiveTheme, onNavigate, onClose, onThemeCycle, onExport, onImport, onPlanDay, onLogout, inboxCount = 0, somedayCount = 0 } = $props()
   let isTouch = $state(window.matchMedia('(pointer:coarse)').matches)
 
   const GROUPS = [
@@ -71,6 +71,12 @@
             {/if}
           </div>
         {/each}
+        <div class="ios-section">
+          <button class="ios-row" onclick={() => { onLogout(); onClose() }}>
+            <LogOut size={18} strokeWidth={1.5} class="ios-row-icon" />
+            <span class="ios-row-label">Log out</span>
+          </button>
+        </div>
       </div>
       <div class="ios-sheet-footer">
         <button class="ios-footer-btn" onclick={onThemeCycle} title="Toggle theme">
